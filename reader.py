@@ -6,7 +6,7 @@ import translatorUbx as tu
 
 
 ## OPEN SERIAL PORT
-ser = serial.Serial('/dev/tty.usbmodem14101', 9600)
+ser = serial.Serial('/dev/ttyACM0', 9600)
 
 # Flags for keeping track of syncing characters
 readingMessage = False
