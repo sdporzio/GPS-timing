@@ -1,0 +1,1 @@
+echo "$(tail -n 500 /home/lhep/GPS-timing/Reader/Log/log.log)" > /home/lhep/GPS-timing/Reader/Log/log.log
