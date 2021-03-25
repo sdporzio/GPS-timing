@@ -10,23 +10,25 @@ def StringHexToSignedInt(value):
 	return i
 
 
-def Translate(message,payload,checksum):
+def Translate(message,payloadLength):
 	b_syncChar1 = message[0]
 	b_syncChar2 = message[1]
 	b_class = message[2]
 	b_id = message[3]
 	b_length = message[4:6]
+
+	b_payload = message[6:6+payloadLength]
 	
-	b_checksum1 = checksum[0]
-	# b_checksum2 = checksum[1]
+	b_checksum1 = message[6+payloadLength]
+	b_checksum2 = message[6+payloadLength+1]
 
 	## Extract parameters
-	b_towMs = payload[0:4]
-	b_towSubMs = payload[4:8]
-	b_qErr = payload[8:12]
-	b_week = payload[12:14]
-	b_flags = payload[14]
-	b_refInfo = payload[15]
+	b_towMs = b_payload[0:4]
+	b_towSubMs = b_payload[4:8]
+	b_qErr = b_payload[8:12]
+	b_week = b_payload[12:14]
+	b_flags = b_payload[14]
+	b_refInfo = b_payload[15]
 
 	## Little-endian conversion
 	b_length = b_length[::-1]
@@ -70,7 +72,7 @@ def Translate(message,payload,checksum):
 	# Return the timestamp for reference
 	return towMs
 
-	## Print out diagnostics
+	# # Print out diagnostics
 	# print(f'SyncChar: {b_syncChar1} {b_syncChar2}')
 	# print(f'Class: {b_class}')
 	# print(f'ID: {b_id}')

@@ -1,8 +1,10 @@
 import serial
 import binascii
+import subprocess
+from datetime import datetime as dt
 
-import translatorNmea as tn
-import translatorUbx as tu
+from Translator import translatorNmea as tn
+from Translator import translatorUbx as tu
 
 
 ## OPEN SERIAL PORT
@@ -17,11 +19,17 @@ payloadCounter = 0
 checksumCounter = 0
 payloadLength = 0
 
+# Flags for ensuring ubx timestamp is not missing a step
+numberUbxTimestamps = 0
+previousTimestamp = 0
+isOneSecondApart = True
+
 messageConcluded = False
 
 # Temporary holding variable
 previous_b_nmea = '00'
 previous_b_ubx = '00'
+b_register = []
 
 
 # Message and payload holders
@@ -37,6 +45,7 @@ syncChar2 = '62'
 while True:
 	## Read byte-by-byte
 	b = ser.read()
+	b_register.append(binascii.hexlify(b).decode('ascii','replace'))
 	b_nmea = b
 	# A bit of mix-and-match. If the $ byte is encountered, we read the full line, NMEA-style.
 	# If not, we have to continue reading the byte, for UBX protocol.
@@ -47,6 +56,12 @@ while True:
 		bl = ser.readline()
 		# Send it over to the NMEA translator
 		tn.Translate(bl)
+		print(f"{dt.now()} NMEA: {bl}")
+		print(f"|- Previous line: {''.join(b_register)}")
+		print()
+		b_register = []
+		# Shorten the log
+		# subprocess.Popen(["/home/lhep/GPS-timing/Reader/Log/logCleaner.sh"],shell=True)
 	
 	## UBX READING 
 	else:
@@ -99,11 +114,14 @@ while True:
 				readingChecksum = True
 				checksumCounter = 0
 
-		if payloadCounter == payloadLength and readingPayload == False and readingChecksum == True and checksumCounter < 2:
+		if payloadCounter == payloadLength and readingPayload == False and readingChecksum == True and checksumCounter < 1:
 			message.append(b_ubx)
 			checksum.append(b_ubx)
 			checksumCounter += 1
-		elif payloadCounter == payloadLength and readingPayload == False and readingChecksum == True and checksumCounter >= 2:
+		elif payloadCounter == payloadLength and readingPayload == False and readingChecksum == True and checksumCounter >= 1:
+			message.append(b_ubx)
+			checksum.append(b_ubx)
+			checksumCounter += 1
 			messageConcluded = True
 
 		if messageConcluded:
@@ -116,16 +134,38 @@ while True:
 
 			messageConcluded = False
 
-			tu.Translate(message,payload,checksum)
-			print(message)
+			currentTimestamp = tu.Translate(message,payload,checksum)
+			numberUbxTimestamps += 1
+
+			print(f"{dt.now()} UBX: {''.join(message)}")
+			print(f"|- Timestamp: {currentTimestamp}")
+			print(f"|- Previous line: {''.join(b_register)}")
+			print()
+			b_register = []
+			# Shorten the log
+			# subprocess.Popen(["/home/lhep/GPS-timing/Reader/Log/logCleaner.sh"],shell=True)
+
+			### FINAL UBX TIMESTAMP CHECK
+			# If we have read at least two timestamps, check that they are one second apart, if they are not flag it
+			if numberUbxTimestamps > 1:
+				timestampDiff = currentTimestamp-previousTimestamp
+				isOneSecondApart = (timestampDiff < 2000)
+			# Actual safe valve, if two timestamps are more than one second apart alt the whole thing
+			if isOneSecondApart == False:
+				print("Error: two consecutive timestamps are more than one second apart!")
+				print(
+					f"CurrT {currentTimestamp} - PrevT {previousTimestamp} = {timestampDiff}")
+				break
+			# If we have read at least one timestamp, we can start associating the current timestamp to the previous one
+			if numberUbxTimestamps > 0:
+				previousTimestamp = currentTimestamp
+
 
 		
-		### ENDING MATTERS
+		### ENDING STUFF
 		# At the end of reading single bytes from UBX messages, update the counter
 		if readingMessage == True:
 			messageCounter += 1
-
-
 
 
 	# Always update the previous byte
