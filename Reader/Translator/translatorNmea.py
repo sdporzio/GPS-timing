@@ -1,4 +1,3 @@
-import serial
 import binascii
 from textwrap import wrap
 from datetime import datetime
@@ -15,13 +14,11 @@ def Translate(payload):
 
 	# Case for QUALITY OF FIX (GSA)
 	if headerWord1 in payload:
-		failedMessage = False
 		# Split the message in separate values
 		values = payload.split(',')
 
 		# Make sure you have all elements
 		if len(values) < 18:
-			failedMessage = True
 			print(f'CORRUPTED MESSAGE! -> {values}')
 			print(values)
 			print(f'len(GSA): {len(values)}<20')
@@ -31,7 +28,6 @@ def Translate(payload):
 		try:
 			posMode = int(posMode)
 		except:
-			failedMessage = True
 			print(f'CORRUPTED MESSAGE! -> {values}')
 			return
 		# Finally send the measurement if everything is ok
@@ -39,13 +35,11 @@ def Translate(payload):
 
 	# Case for NUMBER OF SATELLITES (GNS)
 	if headerWord2 in payload:
-		failedMessage = False
 		# Split the message in separate values
 		values = payload.split(',')
 
 		# Make sure you have all elements
 		if len(values) < 13:
-			failedMessage = True
 			print(f'CORRUPTED MESSAGE! -> {values}')
 			print(values)
 			print(f'len(GSA): {len(values)}<20')
@@ -55,7 +49,6 @@ def Translate(payload):
 		try:
 			numSv = int(numSv)
 		except:
-			failedMessage = True
 			print(f'CORRUPTED MESSAGE! -> {values}')
 			return
 		# Finally send the measurement if everything is ok

@@ -1,4 +1,5 @@
 import serial
+import socket
 import binascii
 import subprocess
 from datetime import datetime as dt
@@ -9,6 +10,12 @@ from Translator import translatorUbx as tu
 
 ## OPEN SERIAL PORT FOR USB READING
 ser = serial.Serial('/dev/ttyACM0', 9600)
+
+## OPEN SOCKET FOR UDP COMMUNICATION
+UDP_IP = "130.92.128.187" # argoncube27.aec.unibe.ch
+UDP_PORT = 5005
+sock = socket.socket(socket.AF_INET,  # Internet
+                     socket.SOCK_DGRAM)  # UDP
 
 # Message and payload holders
 nmeaMessage = []
@@ -120,7 +127,8 @@ while True:
 			if stopUbx:
 				print(f"{dt.now()}: fully read UBX message")
 				print(''.join(ubxMessage),'\n')
-				tu.Translate(ubxMessage,payloadLength)
+				timestamp = tu.Translate(ubxMessage,payloadLength)
+				sock.sendto(bytes(str(timestamp),'utf8'), (UDP_IP, UDP_PORT))
 
 			### END-OF-NMEA-LOOP CONDITION
 			prev_hex = b_hex

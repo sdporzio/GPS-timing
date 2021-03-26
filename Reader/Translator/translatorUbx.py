@@ -67,10 +67,9 @@ def Translate(message,payloadLength):
 	SendMeasurement("flag_utc", flag_utc)
 	SendMeasurement("flag_timebase", flag_timebase)
 	SendMeasurement("flag_qErrInvalid", flag_qErrInvalid)
-	# print(f'UBX {tnow_utc}')
 
 	# Return the timestamp for reference
-	return towMs
+	return tnow_utc
 
 	# # Print out diagnostics
 	# print(f'SyncChar: {b_syncChar1} {b_syncChar2}')
