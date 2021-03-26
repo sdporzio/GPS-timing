@@ -1,2 +1,3 @@
-screen -S log -X quit
-screen -S run -X quit
+screen -S run_gps -X quit
+screen -S log_gps -X quit
+screen -ls
